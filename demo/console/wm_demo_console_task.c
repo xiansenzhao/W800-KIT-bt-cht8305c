@@ -510,17 +510,17 @@ void IIC_ReadLenByte(u8 dev_addr,u16 reg_addr,u8 *buf,u16 len)
 	tls_i2c_write_byte(reg_addr,0);   
 	tls_i2c_wait_ack();	 
 	tls_i2c_stop();
-	tls_os_time_delay(22); 	 
+	tls_os_time_delay(21); 	 
+	
 	tls_i2c_write_byte(dev_addr|0x01,1);
 	tls_i2c_wait_ack();	
-	while(len > 0)
+	while(len > 1)
 	{
 		*buf++ = tls_i2c_read_byte(1,0);
 		tls_i2c_wait_ack();	
-		//printf("read byte=%x\n",*(buf);
 		len --;
 	}
-   	//*buf = tls_i2c_read_byte(0,1);
+   	*buf = tls_i2c_read_byte(0,1);
 	tls_i2c_stop();
 }
 
@@ -631,17 +631,17 @@ void led_on_off(u8 data)
 {
 	//分别判断每一位数据，注意需要把每一位数据移到最低位进行判断，对应开关灯：00 开  其他数据 关
 	if(data & 0x01 != 0)
+		tls_gpio_write(WM_IO_PB_00,0);
+	else
+		tls_gpio_write(WM_IO_PB_00,1);
+	if(data >> 1&0x01 != 0)
 		tls_gpio_write(WM_IO_PB_01,0);
 	else
 		tls_gpio_write(WM_IO_PB_01,1);
-	if(data >> 1&0x01 != 0)
+	if(data >> 2&0x01 != 0)
 		tls_gpio_write(WM_IO_PB_02,0);
 	else
-		tls_gpio_write(WM_IO_PB_02,1);
-	if(data >> 2&0x01 != 0)
-		tls_gpio_write(WM_IO_PB_26,0);
-	else
-		tls_gpio_write(WM_IO_PB_26,1);	
+		tls_gpio_write(WM_IO_PB_02,1);	
 }
 
 //add by zxx end
@@ -653,18 +653,13 @@ bt_send_data_len = 11+8;
 typedef union ADC_DATA
 {
     u8 adc_i[8];
+	//包含CPU电压和温度
     float adc_f[2];
 }ADC_DATA;
 
 
 void my_ble_msg_task(void *sdata)
 {
-	//hlk_iic_init();
-	while(0)
-	{
-		cht8305_GetTempHumi();
-		tls_os_time_delay(1000);
-	}
 
 	//传过来的消息队列指针，这里我定义的是u8类型的
 	u8 *msg;
@@ -698,16 +693,16 @@ void my_ble_msg_task(void *sdata)
 	wm_i2c_scl_config(WM_IO_PA_01);
     wm_i2c_sda_config(WM_IO_PA_04);
     
-	tls_i2c_init(100000);
+	tls_i2c_init(5000);
 	
 	for(;;)
 	{
 
 
-		while (1)
+		while (0)
 			{
 						read_cht8305c_read(&cht_data);
-						tls_os_time_delay(1000);
+						tls_os_time_delay(100);
 					
 			}
 	
